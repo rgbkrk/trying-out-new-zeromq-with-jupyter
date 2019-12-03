@@ -9,6 +9,8 @@ const zmq = require("zeromq");
 
 const readline = require("readline");
 
+const { Session } = require("./session");
+
 async function main() {
   readline.emitKeypressEvents(process.stdin);
   process.stdin.setRawMode(true);
@@ -36,25 +38,11 @@ async function main() {
     await fs.promises.readFile(connectionFilePath)
   );
 
-  const sessionID = uuidv4();
-
-  const iopub_sock = new zmq.Subscriber();
-
-  iopub_sock.connect(
-    `${connectionInfo.transport}://${connectionInfo.ip}:${connectionInfo.iopub_port}`
-  );
-  iopub_sock.subscribe("");
-
-  const shell_sock = new zmq.Dealer();
-
-  shell_sock.connect(
-    `${connectionInfo.transport}://${connectionInfo.ip}:${connectionInfo.shell_port}`
-  );
+  const session = new Session(connectionInfo);
 
   process.on("SIGINT", () => {
-    console.log("closing the socket");
-    iopub_sock.close();
-    shell_sock.close();
+    console.log("closing the session");
+    session.close();
     process.exit();
   });
 
@@ -63,26 +51,14 @@ async function main() {
       process.exit();
     }
 
-    const message = {
-      header: {
-        msg_id: uuidv4(),
-        username: "nteract",
-        session: sessionID,
-        date: new Date().toISOString(),
-        msg_type: "kernel_info_request",
-        version: "5.0"
-      },
-      content: {}
-    };
+    let reply = null;
 
     switch (key.name) {
       case "k":
-        message.header.msg_type = "kernel_info_request";
-        message.content = {};
+        reply = await session.send("kernel_info_request");
         break;
       case "e":
-        message.header.msg_type = "execute_request";
-        message.content = {
+        session.send("execute_request", {
           code: `x = ${Math.random()}
 display(x)
 display(HTML("<b>hi ${Math.ceil(Math.random() * 100)}</b>"))
@@ -90,34 +66,18 @@ display(HTML("<b>hi ${Math.ceil(Math.random() * 100)}</b>"))
           silent: false,
           store_history: false,
           user_expressions: {}
-        };
+        });
         break;
       default:
-        console.log("we don't support ", key.name);
+        reply = await console.log("we don't support ", key.name);
         return;
     }
 
-    await shell_sock.send(
-      encode(message, connectionInfo.signature_scheme, connectionInfo.key)
-    );
-
-    const rawFrames = await shell_sock.receive();
-
-    const reply = decode(
-      rawFrames,
-      connectionInfo.signature_scheme,
-      connectionInfo.key
-    );
     console.log(reply);
   });
 
   const obs = rxjs.Observable.create(async observer => {
-    for await (const [topic, ...frames] of iopub_sock) {
-      const message = decode(
-        frames,
-        connectionInfo.signature_scheme,
-        connectionInfo.key
-      );
+    for await (const message of session.iopub()) {
       observer.next(message);
     }
     observer.complete();
@@ -126,4 +86,4 @@ display(HTML("<b>hi ${Math.ceil(Math.random() * 100)}</b>"))
   obs.subscribe(x => console.log("observed: ", x));
 }
 
-main();
+main().catch(err => console.error(err));
