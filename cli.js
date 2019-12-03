@@ -76,6 +76,14 @@ display(HTML("<b>hi ${Math.ceil(Math.random() * 100)}</b>"))
     console.log(reply);
   });
 
+  const obs2 = rxjs.Observable.create(async observer => {
+    const reply = await session.send("kernel_info_request");
+    observer.next(reply);
+    observer.complete();
+  });
+
+  obs2.subscribe(x => console.log("RESPONSE", x));
+
   const obs = rxjs.Observable.create(async observer => {
     for await (const message of session.iopub()) {
       observer.next(message);

@@ -4,8 +4,6 @@ const crypto = require("crypto");
 
 const WIRE_PROTOCOL_DELIMITER = "<IDS|MSG>";
 
-const zmq = require("zeromq");
-
 function toJSON(value) {
   return JSON.parse(value.toString());
 }
