@@ -40,15 +40,17 @@ async function main() {
 
   const session = new Session(connectionInfo);
 
-  process.on("SIGINT", () => {
+  function close() {
     console.log("closing the session");
     session.close();
     process.exit();
-  });
+  }
+
+  process.on("SIGINT", close);
 
   process.stdin.on("keypress", async (str, key) => {
     if (key.ctrl && key.name === "c") {
-      process.exit();
+      close();
     }
 
     let reply = null;
@@ -68,8 +70,11 @@ display(HTML("<b>hi ${Math.ceil(Math.random() * 100)}</b>"))
           user_expressions: {}
         });
         break;
+      case "q":
+        close();
+        return;
       default:
-        reply = await console.log("we don't support ", key.name);
+        console.log("we don't support ", key.name);
         return;
     }
 
