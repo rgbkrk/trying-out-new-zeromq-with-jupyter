@@ -1,6 +1,4 @@
-//@ts-check
-
-const crypto = require("crypto");
+const crypt = require("crypto");
 
 const WIRE_PROTOCOL_DELIMITER = "<IDS|MSG>";
 
@@ -9,7 +7,7 @@ function toJSON(value) {
 }
 
 function initializeMessage(_message) {
-  return Object.assign(
+  const message = Object.assign(
     {},
     {
       header: {},
@@ -21,6 +19,8 @@ function initializeMessage(_message) {
     },
     _message
   );
+
+  return message;
 }
 
 function identifyHMACScheme(_scheme) {
@@ -34,12 +34,6 @@ function identifyHMACScheme(_scheme) {
   return scheme;
 }
 
-/**
- *
- * @param {Array<Buffer>} messageFrames
- * @param {string} _scheme
- * @param {string} key
- */
 function decode(messageFrames, _scheme = "sha256", key = "") {
   var i = 0;
   const idents = [];
@@ -63,7 +57,7 @@ function decode(messageFrames, _scheme = "sha256", key = "") {
     const scheme = identifyHMACScheme(_scheme);
     var obtainedSignature = messageFrames[i + 1].toString();
 
-    var hmac = crypto.createHmac(scheme, key);
+    var hmac = crypt.createHmac(scheme, key);
     hmac.update(messageFrames[i + 2]);
     hmac.update(messageFrames[i + 3]);
     hmac.update(messageFrames[i + 4]);
@@ -97,26 +91,29 @@ function encode(_message, _scheme = "sha256", key = "") {
 
   const idents = message.idents;
 
-  const header = JSON.stringify(message.header);
-  const parent_header = JSON.stringify(message.parent_header);
-  const metadata = JSON.stringify(message.metadata);
-  const content = JSON.stringify(message.content);
+  const header = Buffer.from(JSON.stringify(message.header), "utf-8");
+  const parent_header = Buffer.from(
+    JSON.stringify(message.parent_header),
+    "utf-8"
+  );
+  const metadata = Buffer.from(JSON.stringify(message.metadata), "utf-8");
+  const content = Buffer.from(JSON.stringify(message.content), "utf-8");
 
   let signature = "";
   if (key) {
-    const hmac = crypto.createHmac(scheme, key);
-    hmac.update(Buffer.from(header, "utf-8"));
-    hmac.update(Buffer.from(parent_header, "utf-8"));
-    hmac.update(Buffer.from(metadata, "utf-8"));
-    hmac.update(Buffer.from(content, "utf-8"));
+    const hmac = crypt.createHmac(scheme, key);
+    hmac.update(header);
+    hmac.update(parent_header);
+    hmac.update(metadata);
+    hmac.update(content);
     signature = hmac.digest("hex");
   }
 
   var response = idents
     .concat([
       // idents
-      WIRE_PROTOCOL_DELIMITER, // delimiter
-      signature, // HMAC signature
+      Buffer.from(WIRE_PROTOCOL_DELIMITER), // delimiter
+      Buffer.from(signature), // HMAC signature
       header, // header
       parent_header, // parent header
       metadata, // metadata
