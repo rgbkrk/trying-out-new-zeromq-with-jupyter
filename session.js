@@ -1,4 +1,4 @@
-const { decode, encode } = require("./index");
+const { decode, encode } = require("@nteract/messaging").wireProtocol;
 const uuidv4 = require("uuid/v4");
 
 const zmq = require("zeromq");

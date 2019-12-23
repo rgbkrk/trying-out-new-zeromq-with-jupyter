@@ -1,11 +1,7 @@
-const { decode, encode } = require("./index");
-const uuidv4 = require("uuid/v4");
 const path = require("path");
 const fs = require("fs");
 
 const rxjs = require("rxjs");
-
-const zmq = require("zeromq");
 
 const readline = require("readline");
 
