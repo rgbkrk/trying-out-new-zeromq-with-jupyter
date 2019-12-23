@@ -24,6 +24,17 @@ class Session {
     this.control_sock.connect(
       `${connectionInfo.transport}://${connectionInfo.ip}:${connectionInfo.control_port}`
     );
+
+    this.hb_sock = new zmq.Dealer();
+    this.hb_sock.connect(
+      `${connectionInfo.transport}://${connectionInfo.ip}:${connectionInfo.hb_port}`
+    );
+  }
+
+  async echo(content) {
+    await this.hb_sock.send(content);
+    const response = await this.hb_sock.receive();
+    return response.map(x => x.toString());
   }
 
   async sendOnControl(msg_type, content = {}) {
@@ -38,6 +49,8 @@ class Session {
       },
       content
     };
+
+    let rawFrames;
 
     try {
       await this.control_sock.send(
