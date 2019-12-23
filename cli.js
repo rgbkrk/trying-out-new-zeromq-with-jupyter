@@ -70,7 +70,9 @@ async function main() {
         break;
       case "e":
         session.send("execute_request", {
-          code: `x = ${Math.random()}
+          code: `
+from IPython.display import HTML          
+x = ${Math.random()}
 display(x)
 display(HTML("<b>hi ${Math.ceil(Math.random() * 100)}</b>"))
           `,

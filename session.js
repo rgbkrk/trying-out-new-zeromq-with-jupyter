@@ -43,8 +43,8 @@ class Session {
       await this.control_sock.send(
         encode(
           message,
-          this.connectionInfo.signature_scheme,
-          this.connectionInfo.key
+          this.connectionInfo.key,
+          this.connectionInfo.signature_scheme
         )
       );
 
@@ -56,8 +56,8 @@ class Session {
 
     const reply = decode(
       rawFrames,
-      this.connectionInfo.signature_scheme,
-      this.connectionInfo.key
+      this.connectionInfo.key,
+      this.connectionInfo.signature_scheme
     );
 
     return reply;
@@ -79,8 +79,8 @@ class Session {
     await this.shell_sock.send(
       encode(
         message,
-        this.connectionInfo.signature_scheme,
-        this.connectionInfo.key
+        this.connectionInfo.key,
+        this.connectionInfo.signature_scheme
       )
     );
 
@@ -88,8 +88,8 @@ class Session {
 
     const reply = decode(
       rawFrames,
-      this.connectionInfo.signature_scheme,
-      this.connectionInfo.key
+      this.connectionInfo.key,
+      this.connectionInfo.signature_scheme
     );
 
     return reply;
@@ -99,8 +99,8 @@ class Session {
     for await (const [topic, ...frames] of this.iopub_sock) {
       const message = decode(
         frames,
-        this.connectionInfo.signature_scheme,
-        this.connectionInfo.key
+        this.connectionInfo.key,
+        this.connectionInfo.signature_scheme
       );
       yield message;
     }
