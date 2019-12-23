@@ -56,8 +56,17 @@ async function main() {
     let reply = null;
 
     switch (key.name) {
+      case "c":
+        reply = await session.sendOnControl("kernel_info_request");
+        break;
+      case "b":
+        reply = await session.sendOnControl("bad_message");
+        break;
       case "k":
         reply = await session.send("kernel_info_request");
+        break;
+      case "s":
+        reply = await session.send("status");
         break;
       case "e":
         session.send("execute_request", {

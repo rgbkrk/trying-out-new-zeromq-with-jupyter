@@ -19,6 +19,48 @@ class Session {
     this.shell_sock.connect(
       `${connectionInfo.transport}://${connectionInfo.ip}:${connectionInfo.shell_port}`
     );
+
+    this.control_sock = new zmq.Dealer();
+    this.control_sock.connect(
+      `${connectionInfo.transport}://${connectionInfo.ip}:${connectionInfo.control_port}`
+    );
+  }
+
+  async sendOnControl(msg_type, content = {}) {
+    const message = {
+      header: {
+        msg_id: uuidv4(),
+        username: "nteract",
+        session: this.sessionID,
+        date: new Date().toISOString(),
+        version: "5.0",
+        msg_type
+      },
+      content
+    };
+
+    try {
+      await this.control_sock.send(
+        encode(
+          message,
+          this.connectionInfo.signature_scheme,
+          this.connectionInfo.key
+        )
+      );
+
+      rawFrames = await this.control_sock.receive();
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+
+    const reply = decode(
+      rawFrames,
+      this.connectionInfo.signature_scheme,
+      this.connectionInfo.key
+    );
+
+    return reply;
   }
 
   async send(msg_type, content = {}) {
@@ -67,6 +109,7 @@ class Session {
   close() {
     this.iopub_sock.close();
     this.shell_sock.close();
+    this.control_sock.close();
   }
 }
 
