@@ -57,8 +57,8 @@ async function main() {
         break;
 
       case "h":
-        reply = await session.echo("test this out");
-        console.log("HEARTBEAT: ", reply);
+        reply = await session.echo("HEARTBEAT");
+        console.log(reply);
         return;
       case "b":
         reply = await session.sendOnControl("bad_message");

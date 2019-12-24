@@ -9,6 +9,8 @@ class Session {
 
     this.sessionID = uuidv4();
 
+    this.username = "nteract";
+
     this.iopub_sock = new zmq.Subscriber();
     this.iopub_sock.connect(
       `${connectionInfo.transport}://${connectionInfo.ip}:${connectionInfo.iopub_port}`
@@ -41,7 +43,7 @@ class Session {
     const message = {
       header: {
         msg_id: uuidv4(),
-        username: "nteract",
+        username: this.username,
         session: this.sessionID,
         date: new Date().toISOString(),
         version: "5.0",
@@ -80,7 +82,7 @@ class Session {
     const message = {
       header: {
         msg_id: uuidv4(),
-        username: "nteract",
+        username: this.username,
         session: this.sessionID,
         date: new Date().toISOString(),
         version: "5.0",
@@ -123,6 +125,7 @@ class Session {
     this.iopub_sock.close();
     this.shell_sock.close();
     this.control_sock.close();
+    this.hb_sock.close();
   }
 }
 
