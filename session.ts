@@ -1,9 +1,19 @@
-const { decode, encode } = require("@nteract/messaging").wireProtocol;
-const uuidv4 = require("uuid/v4");
+import { wireProtocol } from "@nteract/messaging";
+import * as uuidv4 from "uuid/v4";
+import * as zmq from "zeromq";
 
-const zmq = require("zeromq");
+const { decode, encode } = wireProtocol;
 
-class Session {
+export class Session {
+  connectionInfo: any;
+
+  sessionID: string;
+  username: string;
+  iopub_sock: zmq.Subscriber;
+  shell_sock: zmq.Dealer;
+  control_sock: zmq.Dealer;
+  hb_sock: zmq.Dealer;
+
   constructor(connectionInfo) {
     this.connectionInfo = connectionInfo;
 
@@ -128,7 +138,3 @@ class Session {
     this.hb_sock.close();
   }
 }
-
-module.exports = {
-  Session
-};
