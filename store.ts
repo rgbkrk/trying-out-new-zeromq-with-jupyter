@@ -12,6 +12,7 @@ import { homedir } from "os";
 import { Session } from "./session";
 import { RawJupyterMessage } from "@nteract/messaging/lib/wire-protocol";
 import { acquireSession } from "./connect";
+import { JupyterMessageHeader } from "@nteract/messaging";
 
 const certsDir = path.join(homedir(), "cockroach-data", "certs");
 
@@ -32,6 +33,13 @@ function normalizeUUID(id: string): string {
   return portions.join("");
 }
 
+function normalizeHeader(header: JupyterMessageHeader): JupyterMessageHeader {
+  return Object.assign({}, header, {
+    session: normalizeUUID(header.session),
+    msg_id: normalizeUUID(header.msg_id)
+  });
+}
+
 function memorializeJupyterSession(client: pg.PoolClient, session: Session) {
   const obs = Observable.create(
     async (observer: Observer<RawJupyterMessage>) => {
@@ -45,15 +53,10 @@ function memorializeJupyterSession(client: pg.PoolClient, session: Session) {
   const subscription = obs
     .pipe(
       map((message: RawJupyterMessage) => {
-        const header = Object.assign({}, message.header, {
-          session: normalizeUUID(message.header.session),
-          msg_id: normalizeUUID(message.header.msg_id)
-        });
-
-        const parent_header = Object.assign({}, message.parent_header, {
-          session: normalizeUUID(message.parent_header.session),
-          msg_id: normalizeUUID(message.parent_header.msg_id)
-        });
+        const header = normalizeHeader(message.header);
+        const parent_header = normalizeHeader(
+          message.parent_header as JupyterMessageHeader
+        );
 
         return Object.assign({}, message, { parent_header, header });
       }),
