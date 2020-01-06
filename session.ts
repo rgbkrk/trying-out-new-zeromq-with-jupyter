@@ -4,6 +4,8 @@ import * as zmq from "zeromq";
 
 const { decode, encode } = wireProtocol;
 
+console.log("uuidv4:::::", uuidv4());
+
 export class Session {
   connectionInfo: any;
 
@@ -18,6 +20,8 @@ export class Session {
     this.connectionInfo = connectionInfo;
 
     this.sessionID = uuidv4();
+
+    console.log("SESSION ID IS", this.sessionID);
 
     this.username = "nteract";
 

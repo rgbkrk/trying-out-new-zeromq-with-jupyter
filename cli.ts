@@ -5,20 +5,7 @@ import { Observable } from "rxjs";
 
 import * as readline from "readline";
 
-import { Session } from "./session";
-
-if (process.platform !== "darwin") {
-  throw new Error("This CLI only supports Mac for now");
-}
-
-const homedir = require("os").homedir();
-
-const connectionFileDirectory = path.join(
-  homedir,
-  "Library",
-  "Jupyter",
-  "runtime"
-);
+import { acquireSession } from "./connect";
 
 async function main() {
   readline.emitKeypressEvents(process.stdin);
@@ -26,32 +13,7 @@ async function main() {
 
   let [connectionFile] = process.argv.slice(2);
 
-  if (connectionFile === "--random") {
-    const files = (
-      await fs.promises.readdir(connectionFileDirectory)
-    ).filter(x => /kernel.*\.json/.test(x));
-    connectionFile = files[Math.floor(Math.random() * files.length)];
-    if (!connectionFile) {
-      console.error(
-        "Run `jupyter console --kernel python3` in another terminal first"
-      );
-      process.exit(4);
-    }
-
-    console.log("connecting at random to ", connectionFile);
-  }
-
-  if (!connectionFile || connectionFile.length <= 0) {
-    throw new Error("we need a connection file");
-  }
-
-  const connectionFilePath = path.join(connectionFileDirectory, connectionFile);
-
-  const connectionInfo = JSON.parse(
-    (await fs.promises.readFile(connectionFilePath)).toString()
-  );
-
-  const session = new Session(connectionInfo);
+  const session = await acquireSession(connectionFile);
 
   function close() {
     console.log("closing the session");
